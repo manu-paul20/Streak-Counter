@@ -1,0 +1,10 @@
+package com.manu.streakcounter.database
+
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+
+fun Migration_1_2() : Migration = object : Migration(1,2){
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE StreakTable ADD COLUMN lastUpdateTime TEXT NOT NULL DEFAULT '00/00/0000'")
+    }
+}
