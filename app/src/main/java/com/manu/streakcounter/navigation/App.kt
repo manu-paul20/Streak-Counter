@@ -39,7 +39,8 @@ fun App() {
                 streak = Streak(
                     streakName = data.streakName,
                     currentStreak = data.streakCount,
-                    lastUpdateTime = data.lastUpdateTime
+                    lastUpdateTime = data.lastUpdateTime,
+                    targetStreak = data.targetStreak
                     ),
                 navController = navController
             )

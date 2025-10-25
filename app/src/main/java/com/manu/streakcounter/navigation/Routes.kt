@@ -13,6 +13,7 @@ sealed class Routes {
     data class DetailsScreen(
         val streakName: String,
         val streakCount: Int,
-        val lastUpdateTime: String
+        val lastUpdateTime: String,
+        val targetStreak : Int
     )
 }
