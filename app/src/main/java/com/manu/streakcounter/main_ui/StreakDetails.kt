@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -25,12 +26,14 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,12 +46,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.airbnb.lottie.compose.LottieAnimatable
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
@@ -74,6 +77,12 @@ fun StreakDetails(
     var streakCount by remember { mutableStateOf(streak.currentStreak) }
     var lastUpdateTime by remember { mutableStateOf(streak.lastUpdateTime) }
     val context = LocalContext.current
+    var isGreetDialogVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(streakCount, streak.targetStreak) {
+        if (streakCount == streak.targetStreak) {
+            isGreetDialogVisible = true
+        }
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -221,10 +230,33 @@ fun StreakDetails(
             }
         }
     }
-    if (streakCount == streak.targetStreak) {
+    if (isGreetDialogVisible) {
         GreetDialog(
-            onClickReset = {streakCount=0},
-            onClickNew = {}
+            onClickReset = {
+                streakCount = 0
+                viewModel.updateStreak(
+                    Streak(
+                        streakName = streak.streakName,
+                        lastUpdateTime = streak.lastUpdateTime,
+                        currentStreak = streakCount,
+                        targetStreak = streak.targetStreak
+                    )
+                )
+                isGreetDialogVisible = false
+            },
+            onClickNew = {
+                viewModel.updateStreak(
+                    Streak(
+                        streakName = streak.streakName,
+                        currentStreak = streakCount,
+                        lastUpdateTime = streak.lastUpdateTime,
+                        targetStreak = it // setting new target streak
+                    )
+                )
+                isGreetDialogVisible = false
+                navController.navigate(Routes.Home)
+                Toast.makeText(context, "Streak updated", Toast.LENGTH_SHORT).show()
+            }
         )
     }
 }
@@ -294,10 +326,14 @@ private fun FireStreakAnimation() {
 
 @Composable
 fun GreetDialog(
-    onClickReset:()-> Unit,
-    onClickNew:()-> Unit
+    onClickReset: () -> Unit,
+    onClickNew: (Int) -> Unit
 ) {
     val greetColor = listOf(Color(0xFFFFA726), Color(0xFFFF5722))
+    var newTargetStreak by remember { mutableStateOf("") }
+    var isNewTargetDialogVisible by remember { mutableStateOf(false) }
+    var isTargetStreakError by remember { mutableStateOf(false) }
+    var targetStreakErrorMessage by remember { mutableStateOf("") }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -313,42 +349,75 @@ fun GreetDialog(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = AnnotatedString(
-                            text = "Congratulations !",
-                            spanStyle = SpanStyle(brush = Brush.linearGradient(greetColor))
-                        ),
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
-                    LottieAnim(
-                        composition = LottieCompositionSpec.RawRes(R.raw.cutebeardancing),
-                        modifier = Modifier.size(100.dp)
+                    if (isNewTargetDialogVisible) {
+                        Text(
+                            text = "Set New Target",
+                            fontSize = 30.sp
                         )
-                    Spacer(Modifier.height(20.dp))
-                    Text(
-                        text = "You have reached your goal",
-                        fontSize = 20.sp
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    Row {
-                        TextButton(
-                            onClick = {},
-                            modifier = Modifier.weight(1f)
+                        Spacer(Modifier.height(10.dp))
+                        OutlinedTextField(
+                            value = newTargetStreak,
+                            shape = RoundedCornerShape(10.dp),
+                            onValueChange = {
+                                newTargetStreak = it
+                                isTargetStreakError = false
+                                targetStreakErrorMessage = ""
+                            },
+                            isError = isTargetStreakError,
+                            label = { Text("Enter new target streak") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            supportingText = { Text(targetStreakErrorMessage) }
+                        )
+                        Button(
+                            onClick = {
+                                try {
+                                    onClickNew(newTargetStreak.toInt())
+                                } catch (e: Exception) {
+                                    isTargetStreakError = true
+                                    targetStreakErrorMessage = "Please enter a number"
+                                }
+                            }
                         ) {
-                            Text(
-                                text = "Reset streak",
-                                fontSize = 16.sp
-                            )
+                            Text("Submit")
                         }
-                        TextButton(
-                            onClick = {},
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = "New target",
-                                fontSize = 16.sp
-                            )
+                    } else {
+                        Text(
+                            text = AnnotatedString(
+                                text = "Congratulations !",
+                                spanStyle = SpanStyle(brush = Brush.linearGradient(greetColor))
+                            ),
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                        )
+                        LottieAnim(
+                            composition = LottieCompositionSpec.RawRes(R.raw.cutebeardancing),
+                            modifier = Modifier.size(100.dp)
+                        )
+                        Spacer(Modifier.height(20.dp))
+                        Text(
+                            text = "You have reached your goal",
+                            fontSize = 20.sp
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        Row {
+                            TextButton(
+                                onClick = { onClickReset() },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = "Reset streak",
+                                    fontSize = 16.sp
+                                )
+                            }
+                            TextButton(
+                                onClick = { isNewTargetDialogVisible = true },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = "New target",
+                                    fontSize = 16.sp
+                                )
+                            }
                         }
                     }
                 }
@@ -359,9 +428,9 @@ fun GreetDialog(
 
 @Composable
 fun LottieAnim(
-    composition : LottieCompositionSpec,
+    composition: LottieCompositionSpec,
     modifier: Modifier = Modifier
-){
+) {
     val anim by rememberLottieComposition(composition)
     val progress = animateLottieCompositionAsState(
         composition = anim,
@@ -371,7 +440,7 @@ fun LottieAnim(
 
     LottieAnimation(
         composition = anim,
-        progress = {progress.value},
-        modifier= modifier
+        progress = { progress.value },
+        modifier = modifier
     )
 }

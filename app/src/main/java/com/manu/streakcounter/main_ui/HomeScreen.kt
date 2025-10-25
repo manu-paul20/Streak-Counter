@@ -64,7 +64,6 @@ import androidx.navigation.NavController
 import com.manu.streakcounter.database.HomeScreenViewModel
 import com.manu.streakcounter.database.Streak
 import com.manu.streakcounter.navigation.Routes
-import kotlinx.coroutines.flow.merge
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -179,7 +178,7 @@ fun StreakRow(firstStreak: Streak?, secondStreak: Streak?, navController: NavCon
                             streakName = firstStreak?.streakName ?: "",
                             streakCount = firstStreak?.currentStreak ?: 0,
                             lastUpdateTime = firstStreak?.lastUpdateTime ?: "",
-                            targetStreak = firstStreak?.targetStreak?:-1
+                            targetStreak = firstStreak?.targetStreak ?: -1
                         )
                     )
                 },
@@ -217,7 +216,7 @@ fun StreakRow(firstStreak: Streak?, secondStreak: Streak?, navController: NavCon
                             streakName = secondStreak?.streakName ?: "",
                             streakCount = secondStreak?.currentStreak ?: 0,
                             lastUpdateTime = secondStreak?.lastUpdateTime ?: "",
-                            targetStreak = secondStreak?.targetStreak?:-1
+                            targetStreak = secondStreak?.targetStreak ?: -1
                         )
                     )
                 },
@@ -259,7 +258,7 @@ fun StreakRow(firstStreak: Streak?, navController: NavController) {
                         streakName = firstStreak?.streakName ?: "",
                         streakCount = firstStreak?.currentStreak ?: 0,
                         lastUpdateTime = firstStreak?.lastUpdateTime ?: "",
-                        targetStreak = firstStreak?.targetStreak?:-1
+                        targetStreak = firstStreak?.targetStreak ?: -1
                     )
                 )
             },
@@ -391,19 +390,19 @@ fun AddStreakDialog(viewModel: HomeScreenViewModel, onDismiss: () -> Unit, strea
                         onClick = {
                             nameErrorMessage = if (streakName.isBlank()) {
                                 "Streak name cannot be empty"
-                            }else if(isStreakExists){
+                            } else if (isStreakExists) {
                                 "Streak already exists"
-                            }else{
+                            } else {
                                 ""
                             }
                             if (streakName.isNotBlank() && !isStreakExists) {
                                 try {
-                                    val targetStreakInDays = if(targetStreak.isBlank()){
+                                    val targetStreakInDays = if (targetStreak.isBlank()) {
                                         -1
-                                    }else{
-                                        when(targetStreakUnit){
-                                            "Days"-> targetStreak.toInt()
-                                            "Weeks"-> targetStreak.toInt() * 7
+                                    } else {
+                                        when (targetStreakUnit) {
+                                            "Days" -> targetStreak.toInt()
+                                            "Weeks" -> targetStreak.toInt() * 7
                                             else -> targetStreak.toInt() * 30
                                         }
                                     }
@@ -418,11 +417,11 @@ fun AddStreakDialog(viewModel: HomeScreenViewModel, onDismiss: () -> Unit, strea
                                     onDismiss()
                                     Toast.makeText(context, "Streak added", Toast.LENGTH_SHORT)
                                         .show()
-                                }catch (e: Exception){
+                                } catch (e: Exception) {
                                     isTargetStreakError = true
                                 }
 
-                            }else{
+                            } else {
                                 isStreakNameError = true
                             }
                         }
