@@ -19,7 +19,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.Lock
@@ -45,10 +47,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,6 +64,7 @@ import androidx.navigation.NavController
 import com.manu.streakcounter.database.HomeScreenViewModel
 import com.manu.streakcounter.database.Streak
 import com.manu.streakcounter.navigation.Routes
+import kotlinx.coroutines.flow.merge
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -173,7 +178,8 @@ fun StreakRow(firstStreak: Streak?, secondStreak: Streak?, navController: NavCon
                         Routes.DetailsScreen(
                             streakName = firstStreak?.streakName ?: "",
                             streakCount = firstStreak?.currentStreak ?: 0,
-                            lastUpdateTime = firstStreak?.lastUpdateTime ?: ""
+                            lastUpdateTime = firstStreak?.lastUpdateTime ?: "",
+                            targetStreak = firstStreak?.targetStreak?:-1
                         )
                     )
                 },
@@ -210,7 +216,8 @@ fun StreakRow(firstStreak: Streak?, secondStreak: Streak?, navController: NavCon
                         Routes.DetailsScreen(
                             streakName = secondStreak?.streakName ?: "",
                             streakCount = secondStreak?.currentStreak ?: 0,
-                            lastUpdateTime = secondStreak?.lastUpdateTime ?: ""
+                            lastUpdateTime = secondStreak?.lastUpdateTime ?: "",
+                            targetStreak = secondStreak?.targetStreak?:-1
                         )
                     )
                 },
@@ -251,7 +258,8 @@ fun StreakRow(firstStreak: Streak?, navController: NavController) {
                     Routes.DetailsScreen(
                         streakName = firstStreak?.streakName ?: "",
                         streakCount = firstStreak?.currentStreak ?: 0,
-                        lastUpdateTime = firstStreak?.lastUpdateTime ?: ""
+                        lastUpdateTime = firstStreak?.lastUpdateTime ?: "",
+                        targetStreak = firstStreak?.targetStreak?:-1
                     )
                 )
             },
@@ -284,6 +292,11 @@ fun AddStreakDialog(viewModel: HomeScreenViewModel, onDismiss: () -> Unit, strea
     var isStreakNameError by remember { mutableStateOf(false) }
     var isStreakExists = streaks.any { it.streakName == streakName }
     var nameErrorMessage by remember { mutableStateOf("") }
+    var targetStreak by remember { mutableStateOf("") }
+    var targetStreakUnit by remember { mutableStateOf("Days") }
+    var dropDownExtended by remember { mutableStateOf(false) }
+    val onClickDropDown: (String) -> Unit = { targetStreakUnit = it }
+    var isTargetStreakError by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -317,22 +330,100 @@ fun AddStreakDialog(viewModel: HomeScreenViewModel, onDismiss: () -> Unit, strea
                         trailingIcon = { Text("${streakName.length}/20") }
                     )
                     Spacer(Modifier.height(20.dp))
+                    Text(
+                        "Wanna set a target ? , Do it by setting a target streak",
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = targetStreak,
+                        label = { Text("Enter Target") },
+                        supportingText = { Text("Please enter a Integer as target streak") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        onValueChange = {
+                            targetStreak = it
+                            isTargetStreakError = false
+                        },
+                        isError = isTargetStreakError,
+                        shape = RoundedCornerShape(10.dp),
+                        trailingIcon = {
+                            Row(
+                                modifier = Modifier.clickable { dropDownExtended = true },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(targetStreakUnit)
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    modifier = Modifier.rotate(if (dropDownExtended) 180f else 0f),
+                                    contentDescription = null
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = dropDownExtended,
+                                onDismissRequest = { dropDownExtended = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Days") },
+                                    onClick = {
+                                        onClickDropDown("Days")
+                                        dropDownExtended = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Weeks") },
+                                    onClick = {
+                                        onClickDropDown("Weeks")
+                                        dropDownExtended = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Months") },
+                                    onClick = {
+                                        onClickDropDown("Months")
+                                        dropDownExtended = false
+                                    }
+                                )
+                            }
+
+                        }
+                    )
                     Button(
                         onClick = {
-                            nameErrorMessage =
-                                if (streakName.isBlank()) "Streak name cannot be empty" else "Streak already exists"
+                            nameErrorMessage = if (streakName.isBlank()) {
+                                "Streak name cannot be empty"
+                            }else if(isStreakExists){
+                                "Streak already exists"
+                            }else{
+                                ""
+                            }
                             if (streakName.isNotBlank() && !isStreakExists) {
-                                viewModel.addStreak(
-                                    Streak(
-                                        streakName = streakName,
-                                        currentStreak = 0,
-                                        lastUpdateTime = CurrentDateTime()
+                                try {
+                                    targetStreak.toInt()
+                                    val targetStreakInDays = if(targetStreak.isBlank()){
+                                        -1
+                                    }else{
+                                        when(targetStreakUnit){
+                                            "Days"-> targetStreak.toInt()
+                                            "Weeks"-> targetStreak.toInt() * 7
+                                            else -> targetStreak.toInt() * 30
+                                        }
+                                    }
+                                    viewModel.addStreak(
+                                        Streak(
+                                            streakName = streakName,
+                                            currentStreak = 0,
+                                            lastUpdateTime = CurrentDateTime(),
+                                            targetStreak = targetStreakInDays
+                                        )
                                     )
-                                )
-                                onDismiss()
-                                Toast.makeText(context, "Streak added", Toast.LENGTH_SHORT)
-                                    .show()
-                            } else {
+                                    onDismiss()
+                                    Toast.makeText(context, "Streak added", Toast.LENGTH_SHORT)
+                                        .show()
+                                }catch (e: Exception){
+                                    isTargetStreakError = true
+                                }
+
+                            }else{
                                 isStreakNameError = true
                             }
                         }

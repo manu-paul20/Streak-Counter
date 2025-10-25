@@ -22,6 +22,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -64,7 +66,6 @@ fun StreakDetails(
     ScreenBackHandler()
 
     val topAppbarColor = listOf(Color(0xFFFFA726), Color(0xFFFF5722))
-    var streakName by remember { mutableStateOf(streak.streakName) }
     var streakCount by remember { mutableStateOf(streak.currentStreak) }
     var lastUpdateTime by remember { mutableStateOf(streak.lastUpdateTime) }
     val context = LocalContext.current
@@ -82,9 +83,10 @@ fun StreakDetails(
                             modifier = Modifier.clickable {
                                 viewModel.updateStreak(
                                     Streak(
-                                        streakName,
+                                        streak.streakName,
                                         streakCount,
-                                        lastUpdateTime
+                                        lastUpdateTime,
+                                        streak.targetStreak
                                     )
                                 )
                                 navController.navigate(Routes.Home)
@@ -92,7 +94,7 @@ fun StreakDetails(
                         )
                         Spacer(Modifier.width(10.dp))
                         Text(
-                            text = streakName,
+                            text = streak.streakName,
                             fontWeight = FontWeight.Bold,
                             fontSize = 24.sp,
                             modifier = Modifier.fillMaxWidth(0.85f)
@@ -103,9 +105,10 @@ fun StreakDetails(
                             modifier = Modifier.clickable {
                                 viewModel.deleteStreak(
                                     Streak(
-                                        streakName,
+                                        streak.streakName,
                                         streakCount,
-                                        lastUpdateTime
+                                        lastUpdateTime,
+                                        streak.targetStreak
                                     )
                                 )
                                 navController.navigate(Routes.Home)
@@ -138,7 +141,9 @@ fun StreakDetails(
                 Text(lastUpdateTime, fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
                 Row(
-                    Modifier.fillMaxWidth().padding(5.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(5.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
@@ -157,14 +162,41 @@ fun StreakDetails(
                     onClickResetButton = {
                         streakCount = 0
                         lastUpdateTime = CurrentDateTime()
-                        viewModel.updateStreak(Streak(streakName, streakCount, lastUpdateTime))
+                        viewModel.updateStreak(Streak(streak.streakName, streakCount, lastUpdateTime,streak.targetStreak))
                     },
                     onClickIncreaseButton = {
                         streakCount++
                         lastUpdateTime = CurrentDateTime()
-                        viewModel.updateStreak(Streak(streakName, streakCount, lastUpdateTime))
+                        viewModel.updateStreak(Streak(streak.streakName, streakCount, lastUpdateTime,streak.targetStreak))
                     }
                 )
+                Spacer(Modifier.height(50.dp))
+                if(streak.targetStreak > 0){
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Your current progress",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        Spacer(Modifier.height(20.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically){
+                            LinearProgressIndicator(
+                                progress = { streakCount.toFloat() / streak.targetStreak.toFloat() },
+                                color = Color.Blue,
+                                trackColor = Color.LightGray,
+                                gapSize = -50.dp,
+                                modifier = Modifier.fillMaxWidth(0.8f).size(30.dp)
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Text("$streakCount / ${streak.targetStreak} days")
+                        }
+
+                    }
+                }
             }
         }
     }
