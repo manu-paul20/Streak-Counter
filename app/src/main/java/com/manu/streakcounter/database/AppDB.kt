@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Streak::class], version = 2, exportSchema = false)
+@Database(entities = [Streak::class], version = 3, exportSchema = false)
 abstract class AppDB(): RoomDatabase(){
     abstract fun streakDao(): StreakDao
 
@@ -18,7 +18,7 @@ abstract class AppDB(): RoomDatabase(){
                     context = context.applicationContext,
                     klass = AppDB::class.java,
                     name = "app_db"
-                ).addMigrations(Migration_1_2())
+                ).addMigrations(Migration_1_2(),Migration_2_3())
                     .build()
                 Instance = instance
                 instance

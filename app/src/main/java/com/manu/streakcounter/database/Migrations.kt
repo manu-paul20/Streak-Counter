@@ -8,3 +8,9 @@ fun Migration_1_2() : Migration = object : Migration(1,2){
         database.execSQL("ALTER TABLE StreakTable ADD COLUMN lastUpdateTime TEXT NOT NULL DEFAULT '00/00/0000'")
     }
 }
+
+fun Migration_2_3() = object : Migration(2,3){
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE streakTable ADD COLUMN targetStreak INTEGER NOT NULL DEFAULT -1")
+    }
+}
