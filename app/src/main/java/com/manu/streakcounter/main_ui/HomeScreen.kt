@@ -398,7 +398,6 @@ fun AddStreakDialog(viewModel: HomeScreenViewModel, onDismiss: () -> Unit, strea
                             }
                             if (streakName.isNotBlank() && !isStreakExists) {
                                 try {
-                                    targetStreak.toInt()
                                     val targetStreakInDays = if(targetStreak.isBlank()){
                                         -1
                                     }else{

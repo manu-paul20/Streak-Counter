@@ -20,12 +20,14 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -38,13 +40,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.airbnb.lottie.compose.LottieAnimatable
 import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieAnimationState
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
@@ -162,16 +167,30 @@ fun StreakDetails(
                     onClickResetButton = {
                         streakCount = 0
                         lastUpdateTime = CurrentDateTime()
-                        viewModel.updateStreak(Streak(streak.streakName, streakCount, lastUpdateTime,streak.targetStreak))
+                        viewModel.updateStreak(
+                            Streak(
+                                streak.streakName,
+                                streakCount,
+                                lastUpdateTime,
+                                streak.targetStreak
+                            )
+                        )
                     },
                     onClickIncreaseButton = {
                         streakCount++
                         lastUpdateTime = CurrentDateTime()
-                        viewModel.updateStreak(Streak(streak.streakName, streakCount, lastUpdateTime,streak.targetStreak))
+                        viewModel.updateStreak(
+                            Streak(
+                                streak.streakName,
+                                streakCount,
+                                lastUpdateTime,
+                                streak.targetStreak
+                            )
+                        )
                     }
                 )
                 Spacer(Modifier.height(50.dp))
-                if(streak.targetStreak > 0){
+                if (streak.targetStreak > 0) {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -183,13 +202,15 @@ fun StreakDetails(
                             fontWeight = FontWeight.ExtraBold
                         )
                         Spacer(Modifier.height(20.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically){
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             LinearProgressIndicator(
                                 progress = { streakCount.toFloat() / streak.targetStreak.toFloat() },
                                 color = Color.Blue,
                                 trackColor = Color.LightGray,
                                 gapSize = -50.dp,
-                                modifier = Modifier.fillMaxWidth(0.8f).size(30.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth(0.8f)
+                                    .size(30.dp)
                             )
                             Spacer(Modifier.width(10.dp))
                             Text("$streakCount / ${streak.targetStreak} days")
@@ -199,6 +220,12 @@ fun StreakDetails(
                 }
             }
         }
+    }
+    if (streakCount == streak.targetStreak) {
+        GreetDialog(
+            onClickReset = {streakCount=0},
+            onClickNew = {}
+        )
     }
 }
 
@@ -261,6 +288,90 @@ private fun FireStreakAnimation() {
     LottieAnimation(
         modifier = Modifier.size(70.dp),
         composition = composition.value,
-        progress = {progress.value}
+        progress = { progress.value }
+    )
+}
+
+@Composable
+fun GreetDialog(
+    onClickReset:()-> Unit,
+    onClickNew:()-> Unit
+) {
+    val greetColor = listOf(Color(0xFFFFA726), Color(0xFFFF5722))
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Dialog(
+            onDismissRequest = {}
+        ) {
+            Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                Column(
+                    Modifier.padding(10.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = AnnotatedString(
+                            text = "Congratulations !",
+                            spanStyle = SpanStyle(brush = Brush.linearGradient(greetColor))
+                        ),
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                    LottieAnim(
+                        composition = LottieCompositionSpec.RawRes(R.raw.cutebeardancing),
+                        modifier = Modifier.size(100.dp)
+                        )
+                    Spacer(Modifier.height(20.dp))
+                    Text(
+                        text = "You have reached your goal",
+                        fontSize = 20.sp
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Row {
+                        TextButton(
+                            onClick = {},
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "Reset streak",
+                                fontSize = 16.sp
+                            )
+                        }
+                        TextButton(
+                            onClick = {},
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "New target",
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LottieAnim(
+    composition : LottieCompositionSpec,
+    modifier: Modifier = Modifier
+){
+    val anim by rememberLottieComposition(composition)
+    val progress = animateLottieCompositionAsState(
+        composition = anim,
+        isPlaying = true,
+        iterations = LottieConstants.IterateForever
+    )
+
+    LottieAnimation(
+        composition = anim,
+        progress = {progress.value},
+        modifier= modifier
     )
 }
