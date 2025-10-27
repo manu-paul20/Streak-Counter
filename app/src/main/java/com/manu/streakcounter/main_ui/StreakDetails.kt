@@ -19,6 +19,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -83,6 +85,7 @@ fun StreakDetails(
             isGreetDialogVisible = true
         }
     }
+    var isDeleteConfirmationDialogEnabled by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -95,14 +98,6 @@ fun StreakDetails(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = null,
                             modifier = Modifier.clickable {
-                                viewModel.updateStreak(
-                                    Streak(
-                                        streak.streakName,
-                                        streakCount,
-                                        lastUpdateTime,
-                                        streak.targetStreak
-                                    )
-                                )
                                 navController.navigate(Routes.Home)
                             }
                         )
@@ -117,16 +112,7 @@ fun StreakDetails(
                             imageVector = Icons.Default.Delete,
                             contentDescription = null,
                             modifier = Modifier.clickable {
-                                viewModel.deleteStreak(
-                                    Streak(
-                                        streak.streakName,
-                                        streakCount,
-                                        lastUpdateTime,
-                                        streak.targetStreak
-                                    )
-                                )
-                                navController.navigate(Routes.Home)
-                                Toast.makeText(context, "Streak deleted", Toast.LENGTH_SHORT).show()
+                                isDeleteConfirmationDialogEnabled = true
                             }
                         )
 
@@ -256,6 +242,24 @@ fun StreakDetails(
                 isGreetDialogVisible = false
                 navController.navigate(Routes.Home)
                 Toast.makeText(context, "Streak updated", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+    if(isDeleteConfirmationDialogEnabled){
+        DeleteConfirmationDialog(
+            onDismissRequest = {isDeleteConfirmationDialogEnabled = false},
+            onConfirm = {
+                isDeleteConfirmationDialogEnabled = false
+                viewModel.deleteStreak(
+                    Streak(
+                        streak.streakName,
+                        streakCount,
+                        lastUpdateTime,
+                        streak.targetStreak
+                    )
+                )
+                navController.navigate(Routes.Home)
+                Toast.makeText(context, "Streak deleted", Toast.LENGTH_SHORT).show()
             }
         )
     }
@@ -424,6 +428,7 @@ fun GreetDialog(
             }
         }
     }
+
 }
 
 @Composable
@@ -442,5 +447,44 @@ fun LottieAnim(
         composition = anim,
         progress = { progress.value },
         modifier = modifier
+    )
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun DeleteConfirmationDialog(onDismissRequest:()-> Unit, onConfirm:()-> Unit){
+    BasicAlertDialog(
+        onDismissRequest = onDismissRequest,
+        content = {
+            Card(colors = CardDefaults.cardColors(containerColor = Color.White)){
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    Text(
+                        text = "Are you sure ?",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    Row{
+                        TextButton(
+                           modifier =  Modifier.weight(1f),
+                            onClick = { onConfirm() }
+                        ) {
+                            Text("Yes", fontSize = 20.sp)
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        TextButton(
+                            modifier =  Modifier.weight(1f),
+                            onClick = { onDismissRequest() }
+                        ) {
+                            Text("Cancel", fontSize = 20.sp)
+                        }
+                    }
+                }
+            }
+        }
     )
 }
