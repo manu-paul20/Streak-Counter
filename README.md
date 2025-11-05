@@ -28,8 +28,9 @@ Keep your habits on track and your streaks alive with this **Streak Counter app*
 
 ---
 
-## 🚀 How To Run
+## ⬇️ Get the App
 
-1. Clone the repo
-   ```bash
-   git clone https://github.com/manu-paul20/Streak-Counter.git
+You can download the latest version of the application here:
+
+[![Download APK](https://img.shields.io/badge/Download-APK-28a745?style=for-the-badge&logo=android)](https://my-portfolio-mu-indol-71.vercel.app/apks/Streak_Counter.apk)
+
