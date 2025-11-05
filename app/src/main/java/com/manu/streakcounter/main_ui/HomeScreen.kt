@@ -178,7 +178,8 @@ fun StreakRow(firstStreak: Streak?, secondStreak: Streak?, navController: NavCon
                             streakName = firstStreak?.streakName ?: "",
                             streakCount = firstStreak?.currentStreak ?: 0,
                             lastUpdateTime = firstStreak?.lastUpdateTime ?: "",
-                            targetStreak = firstStreak?.targetStreak ?: -1
+                            targetStreak = firstStreak?.targetStreak ?: -1,
+                            lastIncreasePressTime = firstStreak?.lastIncreasePressDate?:"NA"
                         )
                     )
                 },
@@ -216,7 +217,9 @@ fun StreakRow(firstStreak: Streak?, secondStreak: Streak?, navController: NavCon
                             streakName = secondStreak?.streakName ?: "",
                             streakCount = secondStreak?.currentStreak ?: 0,
                             lastUpdateTime = secondStreak?.lastUpdateTime ?: "",
-                            targetStreak = secondStreak?.targetStreak ?: -1
+                            targetStreak = secondStreak?.targetStreak ?: -1,
+                            lastIncreasePressTime = secondStreak?.lastIncreasePressDate?:"NA"
+
                         )
                     )
                 },
@@ -258,7 +261,8 @@ fun StreakRow(firstStreak: Streak?, navController: NavController) {
                         streakName = firstStreak?.streakName ?: "",
                         streakCount = firstStreak?.currentStreak ?: 0,
                         lastUpdateTime = firstStreak?.lastUpdateTime ?: "",
-                        targetStreak = firstStreak?.targetStreak ?: -1
+                        targetStreak = firstStreak?.targetStreak ?: -1,
+                        lastIncreasePressTime = firstStreak?.lastIncreasePressDate?:"NA"
                     )
                 )
             },
@@ -411,7 +415,8 @@ fun AddStreakDialog(viewModel: HomeScreenViewModel, onDismiss: () -> Unit, strea
                                             streakName = streakName,
                                             currentStreak = 0,
                                             lastUpdateTime = CurrentDateTime(),
-                                            targetStreak = targetStreakInDays
+                                            targetStreak = targetStreakInDays,
+                                            lastIncreasePressDate = "NA"
                                         )
                                     )
                                     onDismiss()

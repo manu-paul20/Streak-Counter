@@ -40,7 +40,8 @@ fun App() {
                     streakName = data.streakName,
                     currentStreak = data.streakCount,
                     lastUpdateTime = data.lastUpdateTime,
-                    targetStreak = data.targetStreak
+                    targetStreak = data.targetStreak,
+                    lastIncreasePressDate = data.lastIncreasePressTime
                     ),
                 navController = navController
             )

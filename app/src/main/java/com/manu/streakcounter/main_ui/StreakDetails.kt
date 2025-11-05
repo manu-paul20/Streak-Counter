@@ -63,6 +63,7 @@ import com.manu.streakcounter.R
 import com.manu.streakcounter.database.HomeScreenViewModel
 import com.manu.streakcounter.database.Streak
 import com.manu.streakcounter.navigation.Routes
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -167,7 +168,8 @@ fun StreakDetails(
                                 streak.streakName,
                                 streakCount,
                                 lastUpdateTime,
-                                streak.targetStreak
+                                streak.targetStreak,
+                                streak.lastIncreasePressDate
                             )
                         )
                     },
@@ -179,10 +181,13 @@ fun StreakDetails(
                                 streak.streakName,
                                 streakCount,
                                 lastUpdateTime,
-                                streak.targetStreak
+                                streak.targetStreak,
+                                lastIncreasePressDate = LocalDate.now()
+                                    .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
                             )
                         )
-                    }
+                    },
+                    streakLastIncreasePressDate = streak.lastIncreasePressDate,
                 )
                 Spacer(Modifier.height(50.dp))
                 if (streak.targetStreak > 0) {
@@ -225,7 +230,8 @@ fun StreakDetails(
                         streakName = streak.streakName,
                         lastUpdateTime = streak.lastUpdateTime,
                         currentStreak = streakCount,
-                        targetStreak = streak.targetStreak
+                        targetStreak = streak.targetStreak,
+                        lastIncreasePressDate = streak.lastIncreasePressDate
                     )
                 )
                 isGreetDialogVisible = false
@@ -236,7 +242,8 @@ fun StreakDetails(
                         streakName = streak.streakName,
                         currentStreak = streakCount,
                         lastUpdateTime = streak.lastUpdateTime,
-                        targetStreak = it // setting new target streak
+                        targetStreak = it, // setting new target streak
+                        lastIncreasePressDate = streak.lastIncreasePressDate
                     )
                 )
                 isGreetDialogVisible = false
@@ -252,10 +259,11 @@ fun StreakDetails(
                 isDeleteConfirmationDialogEnabled = false
                 viewModel.deleteStreak(
                     Streak(
-                        streak.streakName,
-                        streakCount,
-                        lastUpdateTime,
-                        streak.targetStreak
+                        streakName = streak.streakName,
+                        currentStreak = streakCount,
+                        lastUpdateTime = lastUpdateTime,
+                        targetStreak = streak.targetStreak,
+                        lastIncreasePressDate = streak.lastIncreasePressDate
                     )
                 )
                 navController.navigate(Routes.Home)
@@ -265,13 +273,19 @@ fun StreakDetails(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomizedButtons(
     onClickResetButton: () -> Unit,
-    onClickIncreaseButton: () -> Unit
+    onClickIncreaseButton: () -> Unit,
+    streakLastIncreasePressDate: String
 ) {
     val increaseButtonColor = listOf(Color(0xFF4CAF50), Color(0xFF81C784))
     val resetButtonColor = listOf(Color(0xFFE53935), Color(0xFFEF5350))
+    var lastIncreasePressDate by remember { mutableStateOf(streakLastIncreasePressDate) }
+    val isIncreasedPressed = CurrentDateTime().contains(lastIncreasePressDate)
+    val currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+    var isDialogOpen by remember { mutableStateOf(false) }
     Row(
         Modifier
             .fillMaxWidth()
@@ -291,7 +305,14 @@ fun CustomizedButtons(
         }
         Spacer(Modifier.width(10.dp))
         Button(
-            onClick = onClickIncreaseButton,
+            onClick = {
+                if(isIncreasedPressed){
+                  isDialogOpen = true
+                }else{
+                    lastIncreasePressDate = currentDate
+                    onClickIncreaseButton()
+                }
+            },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
             modifier = Modifier
                 .background(
@@ -301,6 +322,36 @@ fun CustomizedButtons(
                 .weight(1f),
         ) {
             Text("Increase")
+        }
+    }
+    if(isDialogOpen){
+        BasicAlertDialog(
+            onDismissRequest = { isDialogOpen = false }
+        ) {
+            Card {
+                Column(
+                    modifier = Modifier.padding(10.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Limit Reached",
+                        fontSize = 30.sp,
+                        color = Color.Red
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        text = "You can press the increase button only one time at a day",
+                        fontSize = 20.sp
+                    )
+                    Spacer(Modifier.height(5.dp))
+                    TextButton(
+                        onClick = { isDialogOpen = false }
+                    ) {
+                        Text("OK 👍", fontSize = 16.sp)
+                    }
+                }
+            }
         }
     }
 }
@@ -338,6 +389,7 @@ fun GreetDialog(
     var isNewTargetDialogVisible by remember { mutableStateOf(false) }
     var isTargetStreakError by remember { mutableStateOf(false) }
     var targetStreakErrorMessage by remember { mutableStateOf("") }
+
     Box(
         modifier = Modifier
             .fillMaxSize()

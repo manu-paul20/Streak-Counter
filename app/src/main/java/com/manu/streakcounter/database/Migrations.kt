@@ -14,3 +14,9 @@ fun Migration_2_3() = object : Migration(2,3){
         db.execSQL("ALTER TABLE streakTable ADD COLUMN targetStreak INTEGER NOT NULL DEFAULT -1")
     }
 }
+
+fun Migration_3_4() = object : Migration(3,4){
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE streakTable ADD COLUMN lastIncreasePressDate TEXT NOT NULL DEFAULT 'NA'")
+    }
+}

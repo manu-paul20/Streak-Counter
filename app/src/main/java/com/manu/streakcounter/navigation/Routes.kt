@@ -14,6 +14,7 @@ sealed class Routes {
         val streakName: String,
         val streakCount: Int,
         val lastUpdateTime: String,
-        val targetStreak : Int
+        val targetStreak : Int,
+        val lastIncreasePressTime: String
     )
 }
